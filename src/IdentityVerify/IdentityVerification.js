@@ -94,6 +94,61 @@ function IdentityVerification() {
     { school: "한성대학교", studentId: "1971078", name: "김민기", age: "26" }
   ];
 
+
+  // 추후 사용할 VC 검증 코드
+  const verifyVC = async () => {
+  try {
+    console.log("🔹 Step 1: VC 검증 시작");
+    
+    // 저장된 VC 가져오기
+    const vcString = localStorage.getItem("verifiableCredential");
+    if (!vcString) {
+      throw new Error("VC가 존재하지 않습니다.");
+    }
+    const vc = JSON.parse(vcString);
+    console.log("🔹 Step 2: VC 로드 완료", vc);
+
+    // 서명된 데이터 복원
+    const dataToVerify = JSON.stringify({
+      type: vc.type,
+      credentialSubject: vc.credentialSubject,
+      issuedAt: vc.issuedAt,
+    });
+    console.log("🔹 Step 3: 검증할 데이터 준비 완료", dataToVerify);
+
+    // 공개키 가져오기
+    const publicKey = await importKeyFromBase64(publicKeyBase64, false);
+    console.log("✅ Step 4: 공개키 임포트 성공", publicKey);
+
+    // 서명 Base64 디코딩
+    const signatureBuffer = base64ToArrayBuffer(vc.proof.signature);
+    console.log("🔹 Step 5: 서명 디코딩 완료", signatureBuffer);
+
+    // 데이터 인코딩
+    const encodedData = new TextEncoder().encode(dataToVerify);
+    console.log("🔹 Step 6: 데이터 인코딩 완료", encodedData);
+
+    // 서명 검증
+    const isValid = await crypto.subtle.verify(
+      "RSASSA-PKCS1-v1_5",
+      publicKey,
+      signatureBuffer,
+      encodedData
+    );
+    
+    if (isValid) {
+      console.log("✅ Step 7: 서명 검증 성공 - VC가 유효합니다.");
+      alert("VC 검증 성공: 신원이 유효합니다.");
+    } else {
+      console.log("❌ Step 7: 서명 검증 실패 - VC가 위조되었을 가능성이 있습니다.");
+      alert("VC 검증 실패: 위조 가능성이 있습니다.");
+    }
+  } catch (error) {
+    console.error("❌ 오류 발생:", error);
+  }
+};
+
+
 const issueVC = async (identity) => {
   try {
     console.log("🔹 Step 1: VC 발급 시작");
@@ -144,6 +199,7 @@ const issueVC = async (identity) => {
     console.log("✅ Step 8: VC 저장 완료");
 
     alert("VC가 발급되어 저장되었습니다.");
+    verifyVC();
   } catch (error) {
     console.error("❌ 오류 발생:", error);
   }
