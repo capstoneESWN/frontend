@@ -1,6 +1,8 @@
+/* 메인 앱 코드 [MetaMask 설치 유무 확인 코드] */
+
 import React, { Suspense, useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import IdentityVerification from "./IdentityVerification";
+import IdentityVerification from "./IdentityVerify/IdentityVerification";
 import WalletConnect from "./WalletConnect";
 import DIDForm from "./DIDForm";
 import Authenticate from "./authenticate";
@@ -13,6 +15,7 @@ function App() {
   const [hasMetaMask, setHasMetaMask] = useState(false);
   const [account, setAccount] = useState(null);
   const isAuthenticated = !!account;
+
   useEffect(() => {
     if (typeof window.ethereum === "undefined") {
       alert("❌ MetaMask가 설치되어 있지 않습니다. 설치 후 다시 시도해주세요!");
@@ -20,6 +23,10 @@ function App() {
       setHasMetaMask(true);
     }
   }, []);
+
+  useEffect(() => {
+  console.log("현재 계정:", account);  // account 상태를 콘솔에 출력
+}, [account]); 
 
   return (
     <div className="App"> 

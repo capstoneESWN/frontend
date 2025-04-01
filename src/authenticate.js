@@ -1,3 +1,5 @@
+/* 서명 검증 로직 코드 */
+
 import { recoverAddress, hashMessage } from "ethers";
 import { useNavigate } from "react-router-dom";
 

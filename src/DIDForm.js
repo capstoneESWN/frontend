@@ -1,3 +1,5 @@
+/* DID 문서 유무 판단 코드, 서명 검증 함수 활성화 코드 */
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authenticate } from "./authenticate"; // 인증 관련 함수 임포트
@@ -20,7 +22,7 @@ function DIDForm({ account }) {
 
       // DID 예시 문서 (실제로는 블록체인에 기록되어야 함)
       const exampleDIDDocuments = {
-        "did:ethr:0x0dd5e6d8bb1e7fed45cc09cfdc2b858bab2d3c0a": {
+        "did:ethr:0x0dd5e6d8bb1e7fed45cc09cfdc2b858bab2d3c0": {
           id: "did:ethr:0x0dd5e6d8bb1e7fed45cc09cfdc2b858bab2d3c0a",
           publicKey: [
             {

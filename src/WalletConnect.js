@@ -1,3 +1,5 @@
+/* 지갑 연결 코드 */
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import './App.css';
@@ -14,6 +16,7 @@ function WalletConnect({ setAccount , account }) {
       // 지갑 연결 요청
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       setAccount(accounts[0]); // 첫 번째 지갑 주소 저장
+      console.log("연결된 계정:", accounts[0]); 
     } catch (error) {
       // 에러 발생 시 콘솔에 에러 메시지 출력
       console.error("지갑 연결 실패:", error.message);
