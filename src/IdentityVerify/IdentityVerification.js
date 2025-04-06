@@ -1,6 +1,7 @@
 /* 신원 인증 화면 코드 */
-
-
+import saveDidDocument from "../utils/saveDidDocument";
+import getDidDocument from "../utils/getDidDocument";
+import { recoverAddress, hashMessage } from "ethers";
 import React, { useState } from "react";
 import "./IdentityVerification.css";
 
@@ -81,6 +82,8 @@ function IdentityVerification() {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
+  const [account, setAccount] = useState("");
+  const [didDocument, setDidDocument] = useState("");
 
   const publicKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
   const privateKeyBase64 = "MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA2DSUsa391ITKKcoUdrUSQYe3qkHGYZ36bmdX4ycuX8z4XfrzMNgDFm3gyYyhX/wUEaAs4qJekj6B10PlZOZe8QIDAQABAkADx2t/7YwdvlJwR41zA7g1eANQUQUAKMw7SMgi+sjXOMw0727y5TXHZ3MYq/5jwZcG3oN+U6edtAuhcHLCvWwpAiEA9kCzmMRuCyTC3uwDT56TzJ6RMqtMAvqsQ/FgrPNyztUCIQDgw2g7LJLwUfAs29cT6BMRmWB3vNXeI1Lr4hIbdcS1rQIhANcLE4tR5kNG/AIOGqoZ8jnbMzMLUdq8K1k93c3K3zRtAiBBqZSnxOvgfW+XC1qYHDKF77L5CBfK37L36oGzuAIRuQIhAILrIgOlMGYUZahiDiH+sRhE127rmM9Aa4sDAgaiPJjH"
@@ -149,8 +152,24 @@ function IdentityVerification() {
 };
 
 
-const issueVC = async (identity) => {
+const issueVC = async (identity, reissue) => {
   try {
+    if(reissue) {
+      const message ="message for VC";
+      const signature = await window.ethereum.request({
+      method: "personal_sign",
+      params: [message, account],
+  });
+
+      const recoveredAddress = recoverAddress(hashMessage(message), signature);
+      const didAddress = didDocument.address;
+      if (recoveredAddress.toLowerCase() !== didAddress.toLowerCase()) {
+      alert("❌ 지갑 소유자 검증에 실패했습니다. VC 발급을 중단합니다.");
+      console.error("지갑 주소 불일치:", recoveredAddress, didAddress);
+      return; // 함수 실행 중단
+  }
+    }
+
     console.log("🔹 Step 1: VC 발급 시작");
     
     // VC의 proof를 생성하기 위한 데이터
@@ -205,26 +224,63 @@ const issueVC = async (identity) => {
   }
 };
 
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    const isValid = validIdentities.find(identity => 
-      identity.school === school &&
-      identity.studentId === studentId &&
-      identity.name === name &&
-      identity.age === age
-    );
+  const isValid = validIdentities.find(identity => 
+    identity.school === school &&
+    identity.studentId === studentId &&
+    identity.name === name &&
+    identity.age === age
+  );
 
-    if (isValid) {
-      alert("신원이 확인되었습니다.");
-      if (window.confirm("VC를 발급하시겠습니까?")) {
-        issueVC(isValid); // VC 발급
+  if (isValid) {
+    alert("신원이 확인되었습니다.");
+
+    try {
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      const currentaccount = accounts[0];
+      setAccount(accounts[0]);
+      console.log("연결된 계정:", account); 
+
+      const didDoc = await getDidDocument(account);
+      setDidDocument(didDoc);
+
+      if (didDoc) {
+        const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
+        if (confirmReissue) {
+          issueVC(isValid, true); // VC 재발급
+        }
+      } else {
+        const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
+        if (confirmRegister) {
+          const newDidDoc = {
+            id: `did:ethr:${currentaccount}`,
+            address: currentaccount,
+          };
+
+          const result = await saveDidDocument(currentaccount, newDidDoc);
+
+          if (result) {
+            alert("✅ DID 문서가 성공적으로 등록되었습니다.");
+            const confirmVC = window.confirm("VC를 발급하시겠습니까?");
+            if (confirmVC) {
+              issueVC(isValid,false);
+            }
+          } else {
+            alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
+          }
+        }
       }
-    } else {
-      alert("신원 확인에 실패하였습니다. 정보를 다시 확인해주세요.");
+    } catch (error) {
+      console.error("❌ 처리 중 오류 발생:", error);
+      alert("처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
     }
-  };
+  }else{
+    alert("신원 정보가 정확하지 않습니다. 다시 시도하세요.");
+  }
+};
+
     
 
    const gohome = () => {

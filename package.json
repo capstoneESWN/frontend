@@ -10,6 +10,7 @@
     "bs58": "^6.0.0",
     "buffer": "npm:Buffer@^0.0.0",
     "Buffer": "^0.0.0",
+    "dotenv": "^16.4.7",
     "ethereumjs-util": "^7.1.5",
     "ethers": "^6.13.5",
     "react": "^19.0.0",
@@ -43,5 +44,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.19"
   }
 }
