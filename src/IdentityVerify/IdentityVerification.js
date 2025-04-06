@@ -82,8 +82,6 @@ function IdentityVerification() {
   const [studentId, setStudentId] = useState("");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
-  const [account, setAccount] = useState("");
-  const [didDocument, setDidDocument] = useState("");
 
   const publicKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
   const privateKeyBase64 = "MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA2DSUsa391ITKKcoUdrUSQYe3qkHGYZ36bmdX4ycuX8z4XfrzMNgDFm3gyYyhX/wUEaAs4qJekj6B10PlZOZe8QIDAQABAkADx2t/7YwdvlJwR41zA7g1eANQUQUAKMw7SMgi+sjXOMw0727y5TXHZ3MYq/5jwZcG3oN+U6edtAuhcHLCvWwpAiEA9kCzmMRuCyTC3uwDT56TzJ6RMqtMAvqsQ/FgrPNyztUCIQDgw2g7LJLwUfAs29cT6BMRmWB3vNXeI1Lr4hIbdcS1rQIhANcLE4tR5kNG/AIOGqoZ8jnbMzMLUdq8K1k93c3K3zRtAiBBqZSnxOvgfW+XC1qYHDKF77L5CBfK37L36oGzuAIRuQIhAILrIgOlMGYUZahiDiH+sRhE127rmM9Aa4sDAgaiPJjH"
@@ -152,13 +150,13 @@ function IdentityVerification() {
 };
 
 
-const issueVC = async (identity, reissue) => {
+const issueVC = async (identity, reissue, currentaccount, didDocument) => {
   try {
     if(reissue) {
       const message ="message for VC";
       const signature = await window.ethereum.request({
       method: "personal_sign",
-      params: [message, account],
+      params: [message, currentaccount],
   });
 
       const recoveredAddress = recoverAddress(hashMessage(message), signature);
@@ -240,16 +238,14 @@ const handleSubmit = async (e) => {
     try {
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       const currentaccount = accounts[0];
-      setAccount(accounts[0]);
-      console.log("연결된 계정:", account); 
+      console.log("연결된 계정:", currentaccount); 
 
-      const didDoc = await getDidDocument(account);
-      setDidDocument(didDoc);
+      const didDoc = await getDidDocument(currentaccount);
 
       if (didDoc) {
         const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
         if (confirmReissue) {
-          issueVC(isValid, true); // VC 재발급
+          issueVC(isValid, true, currentaccount, didDoc); // VC 재발급
         }
       } else {
         const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
@@ -265,7 +261,7 @@ const handleSubmit = async (e) => {
             alert("✅ DID 문서가 성공적으로 등록되었습니다.");
             const confirmVC = window.confirm("VC를 발급하시겠습니까?");
             if (confirmVC) {
-              issueVC(isValid,false);
+              issueVC(isValid,false, currentaccount, didDoc);
             }
           } else {
             alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
