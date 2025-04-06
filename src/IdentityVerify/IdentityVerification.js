@@ -216,7 +216,12 @@ const issueVC = async (identity, reissue, currentaccount, didDocument) => {
     console.log("✅ Step 8: VC 저장 완료");
 
     alert("VC가 발급되어 저장되었습니다.");
+    
+    // 딜레이
+    setTimeout(() => {
     verifyVC();
+    }, 500);
+
   } catch (error) {
     console.error("❌ 오류 발생:", error);
   }
