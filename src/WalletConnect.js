@@ -1,5 +1,5 @@
 /* 지갑 연결 코드 */
-
+import { switchToSepolia } from "./utils/switchNetwork";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import './App.css';
@@ -12,7 +12,10 @@ function WalletConnect({ setAccount , account }) {
       return;
     }
 
+
     try {
+
+      await switchToSepolia(); // Sepolia 전환
       // 지갑 연결 요청
       const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
       setAccount(accounts[0]); // 첫 번째 지갑 주소 저장

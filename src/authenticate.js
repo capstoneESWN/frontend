@@ -50,7 +50,7 @@ const verifySignature = async (message, signature, didDocument) => {
 
     // 2. DID 문서에서 지갑 주소 추출 (DID 문서의 'id' 필드에서) 
     // 이는 블록체인 상 DID 문서에서 지갑 주소를 추출함. 
-    const didAddress = didDocument.id.split(":")[2]; // 'did:ethr:' 부분을 제외한 지갑 주소 추출
+    const didAddress = didDocument.address; // 'did:ethr:' 부분을 제외한 지갑 주소 추출
     console.log("DID Address from DID Document:", didAddress);
 
     // 3. 서명이 유효한지 확인 (복구된 주소와 DID 문서의 주소 비교)

@@ -1,5 +1,6 @@
 /* DID 문서 유무 판단 코드, 서명 검증 함수 활성화 코드 */
 
+import getDidDocument from "./utils/getDidDocument";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { authenticate } from "./authenticate"; // 인증 관련 함수 임포트
@@ -15,43 +16,27 @@ function DIDForm({ account }) {
   const [message, setMessage] = useState(""); // 서명할 메시지
   const [signature, setSignature] = useState(""); // 서명
 
+
   useEffect(() => {
     if (account) {
       const did = `did:ethr:${account}`; // 지갑 주소를 기반으로 DID 생성
       setLoading(true);
 
-      // DID 예시 문서 (실제로는 블록체인에 기록되어야 함)
-      const exampleDIDDocuments = {
-        "did:ethr:0x0dd5e6d8bb1e7fed45cc09cfdc2b858bab2d3c0": {
-          id: "did:ethr:0x0dd5e6d8bb1e7fed45cc09cfdc2b858bab2d3c0a",
-          publicKey: [
-            {
-              id: "did:ethr:d1ec335528e540e0d14e74d206df85740736e950#key-1",
-              type: "Secp256k1VerificationKey2018",
-            },
-          ],
-          authentication: [
-            {
-              type: "Secp256k1SignatureAuthentication2018",
-              publicKey: "did:ethr:d1ec335528e540e0d14e74d206df85740736e950#key-1",
-            },
-          ],
-        },
-      };
-
-      const document = exampleDIDDocuments[did];
-
+      //DID 문서 조
+      getDidDocument(account).then((document) => {
       if (document) {
         setDidDocument(document);
-        authenticateAndVerify(document); // 서명 검증을 자동으로 수행
+        authenticateAndVerify(document);
       } else {
         setDidDocument(null);
         setAlarm("이런! 등록된 DID가 없습니다. 신원 인증 후 이용할 수 있습니다.");
         setShowalarm(true);
       }
-
       setLoading(false);
-    }
+    });
+  }
+
+
   }, [account]);
 
   // 서명 검증 및 처리 함수
