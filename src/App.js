@@ -8,6 +8,7 @@ import DIDForm from "./DIDForm";
 import Authenticate from "./authenticate";
 import bgImage from './assets/bg.jpg';
 import MainPage from "./mypage/MainPage";
+import Polls from "./polls/polls"; // polls 컴포넌트 가져오기
 import ProtectedRoute from "./ProtectedRoute";
 import './App.css';
 
@@ -63,6 +64,7 @@ function App() {
           <Route path="/didform" element={<DIDForm />} />
           <Route path="/authenticate" element={<Authenticate />} />
           <Route path="/mainpage" element={<MainPage />} />
+          <Route path="/polls" element={<Polls account={account} />} /> {/* Polls 경로 추가 */}
         </Route>
         </Routes>
     </div>
