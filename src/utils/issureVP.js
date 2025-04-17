@@ -15,8 +15,9 @@ const issueVP = async () => {
         const vcString = localStorage.getItem("verifiableCredential");
 
 
-        if (!vcString) throw new Error("VC 없음");
-
+        if (!vcString) { 
+            throw new Error("VC 없음");
+        }
 
 
 

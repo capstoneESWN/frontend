@@ -1,5 +1,5 @@
 import React from 'react';
-import Poll from './Poll';
+import Poll from './poll';
 
 const pollsData = [
   {
@@ -40,4 +40,4 @@ const Polls = ({ account }) => {
   );
 };
 
-export default polls;
+export default Polls;

@@ -19,6 +19,10 @@ const MainPage = () => {
     issueVP();
   };
 
+  const handlePollClick = () => {
+    navigate("/polls");
+  }
+
 
   return (
     <div className="main-container">
@@ -26,7 +30,7 @@ const MainPage = () => {
 
       <button onClick={handleReVPClick}>VP 발급하기</button>
 
-      <button>여론조사 시작하기</button>
+      <button onClick={handlePollClick}>여론조사 시작하기</button>
     </div>
   );
 };

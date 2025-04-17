@@ -50,7 +50,7 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
 
       try {
         // localStorage에서 VP 데이터 가져오기 (현재는 VC로 저장된 데이터 사용)
-        const vpString = localStorage.getItem('verifiableCredential');
+        const vpString = localStorage.getItem('verifiablePresentation');
         if (!vpString) {
           console.error('VP가 존재하지 않습니다.');
           return;
@@ -58,7 +58,7 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
 
         // VP 파싱 및 VC 추출
         const vp = JSON.parse(vpString);
-        const vc = vp.verifiableCredential; // VP 내 VC 데이터
+        const vc = vp.verifiableCredential?.[0]; // VP 내 VC 데이터
 
         // 공공기관 공개키 (하드코딩, 실제 키로 대체 필요)
         const publicAuthorityKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
@@ -74,6 +74,7 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
           credentialSubject: vc.credentialSubject,
           issuedAt: vc.issuedAt,
         });
+
         const vcSignatureBuffer = base64ToArrayBuffer(vc.proof.signature); // VC 서명 디코딩
         const vcEncodedData = new TextEncoder().encode(vcDataToVerify); // 데이터 인코딩
         const isAuthorityValid = await crypto.subtle.verify(
@@ -83,11 +84,13 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
           vcEncodedData
         );
 
+        console.log("isAuthorityValid:",isAuthorityValid);
+
         // 개인 서명 검증 (VP 서명)
         const vpDataToVerify = JSON.stringify({
-          verifiableCredential: vp.verifiableCredential,
+          holder: vp.holder,
         });
-        const vpSignatureBuffer = base64ToArrayBuffer(vp.proof.signature); // VP 서명 디코딩
+        const vpSignatureBuffer = base64ToArrayBuffer(vp.proof.jwt); // VP 서명 디코딩
         const vpEncodedData = new TextEncoder().encode(vpDataToVerify); // 데이터 인코딩
         const isPersonalValid = await crypto.subtle.verify(
           "RSASSA-PKCS1-v1_5",
