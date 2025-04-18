@@ -5,6 +5,7 @@ export const issuerVP = async () => {
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         const currentaccount = accounts[0];
 
+
         // 2. VC 가져오기
         const vcString = localStorage.getItem("verifiableCredential");
         if (!vcString) throw new Error("VC 없음");
@@ -24,7 +25,7 @@ export const issuerVP = async () => {
                     { name: "name", type: "string" },
                     { name: "version", type: "string" },
                     { name: "chainId", type: "uint256" },
-                    //좀 더 강화하면 여기에 스마트 계약 주소 포함 
+
                 ],
                 VP: [
                     { name: "type", type: "string" },
@@ -36,7 +37,6 @@ export const issuerVP = async () => {
                 name: "YourAppName",
                 version: "1",
                 chainId: 11155111,  // Sepolia 테스트넷의 chainIn
-                //스마트 게약 주소 포함해서 만들 것. 
 
             },
             primaryType: "VP",
@@ -75,4 +75,3 @@ export const issuerVP = async () => {
         console.error("❌ VP 발급 실패:", err);
         alert("VP 발급 중 오류 발생");
     }
-};
