@@ -1,7 +1,7 @@
 
 export const issuerVP = async () => {
     try {
-
+        //1.현재 연결된 지갑 주소 가져오기 
         const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
         const currentaccount = accounts[0];
 
@@ -75,4 +75,3 @@ export const issuerVP = async () => {
         console.error("❌ VP 발급 실패:", err);
         alert("VP 발급 중 오류 발생");
     }
-};
