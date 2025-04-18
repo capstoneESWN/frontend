@@ -75,3 +75,4 @@ export const issuerVP = async () => {
         console.error("❌ VP 발급 실패:", err);
         alert("VP 발급 중 오류 발생");
     }
+}
