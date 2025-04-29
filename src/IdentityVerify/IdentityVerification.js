@@ -91,7 +91,7 @@ function IdentityVerification() {
     { school: "한성대학교", studentId: "1971081", name: "김동휘", age: "25" },
     { school: "한성대학교", studentId: "1971080", name: "전지원", age: "23" },
     { school: "한성대학교", studentId: "1971079", name: "김희원", age: "23" },
-    { school: "한성대학교", studentId: "1971078", name: "김민기", age: "26" }
+    { school: "한성대학교", studentId: "1971078", name: "김민기", age: "33" }
   ];
 
 
