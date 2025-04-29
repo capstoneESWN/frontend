@@ -5,6 +5,23 @@ import { recoverAddress, hashMessage } from "ethers";
 import React, { useState } from "react";
 import "./IdentityVerification.css";
 
+
+
+function downloadVC(vc) {
+  const vcJson = JSON.stringify(vc, null, 2); // 보기 좋게 포맷팅
+  const blob = new Blob([vcJson], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'verifiable_credential.json'; // 저장할 파일 이름
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+}
+
 function arrayBufferToBase64(buffer) {
   let binary = '';
   let bytes = new Uint8Array(buffer);
@@ -90,7 +107,7 @@ function IdentityVerification() {
   const validIdentities = [
     { school: "한성대학교", studentId: "1971081", name: "김동휘", age: "25" },
     { school: "한성대학교", studentId: "1971080", name: "전지원", age: "23" },
-    { school: "한성대학교", studentId: "1971079", name: "김희원", age: "23" },
+    { school: "한성대학교", studentId: "2071494", name: "김희원", age: "23" },
     { school: "한성대학교", studentId: "1971078", name: "김민기", age: "26" }
   ];
 
@@ -210,16 +227,16 @@ function IdentityVerification() {
 
       console.log("🔹 Step 7: VC 객체 생성 완료", vc);
 
-      // VC를 localStorage에 저장
       localStorage.setItem("verifiableCredential", JSON.stringify(vc));
       console.log("✅ Step 8: VC 저장 완료");
 
       alert("가 발급되어 저장되었습니다.");
 
-      // 딜레이
-      setTimeout(() => {
-        verifyVC();
-      }, 500);
+      downloadVC(vc);
+      alert("VC가 발급되어 저장되었습니다.");
+      await verifyVC(); 
+      gohome();
+      
 
     } catch (error) {
       console.error("❌ 오류 발생:", error);

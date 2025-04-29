@@ -22,7 +22,7 @@ function DIDForm({ account }) {
       const did = `did:ethr:${account}`; // 지갑 주소를 기반으로 DID 생성
       setLoading(true);
 
-      //DID 문서 조
+      //DID 문서 조회
       getDidDocument(account).then((document) => {
       if (document) {
         setDidDocument(document);

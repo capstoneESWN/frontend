@@ -1,5 +1,5 @@
 /* 신원 인증이 완료된 사용자 화면 코드 */
-
+//MainPage.js
 import React, { useState, useEffect } from "react";
 import { issuerVP } from "../utils/issureVP";
 import { useNavigate } from "react-router-dom";// 경로는 네 구조에 따라 조정
