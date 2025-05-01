@@ -31,8 +31,7 @@ async function importKeyFromBase64(base64Key, isPrivateKey) {
   );
 }
 
-// Poll 컴포넌트
-const Poll = ({ question, options, minAge, maxAge, account }) => {
+const Poll = ({ question, options, minAge, maxAge, account, vp }) => { // 🔄 변경됨
   const [votes, setVotes] = useState(Array(options.length).fill(0));
   const [hasVoted, setHasVoted] = useState(false);
   const [userAge, setUserAge] = useState(null);
@@ -41,16 +40,12 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
 
   useEffect(() => {
     const verifyVP = async () => {
-      if (!account) return;
+      if (!account || !vp) return; // 🔄 변경됨
 
       try {
-        const vpString = localStorage.getItem('verifiablePresentation');
-        if (!vpString) {
-          console.error('VP가 존재하지 않습니다.');
-          return;
-        }
+        // 🔄 로컬스토리지에서 불러오던 부분 제거됨
+        // const vp = JSON.parse(localStorage.getItem('verifiablePresentation'));
 
-        const vp = JSON.parse(vpString);
         console.log('VP 데이터:', vp);
         console.log('VP proof:', vp.proof);
         const vc = vp.verifiableCredential?.[0];
@@ -86,7 +81,6 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
 
         console.log("isAuthorityValid:", isAuthorityValid);
 
-        // EIP-712 서명 검증
         const typedData = {
           types: {
             EIP712Domain: [
@@ -109,7 +103,6 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
           },
         };
 
-        // 서명 검증
         const recoveredAddress = ethers.verifyTypedData(
           typedData.domain,
           { VP: typedData.types.VP },
@@ -117,7 +110,6 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
           vp.proof.signature
         );
 
-        // 서명자가 계정과 일치하는지 확인
         const isPersonalValid = recoveredAddress.toLowerCase() === account.toLowerCase();
         console.log("isPersonalValid:", isPersonalValid, "recoveredAddress:", recoveredAddress);
 
@@ -149,11 +141,7 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
     };
 
     verifyVP();
-  }, [account, question, minAge, maxAge]);
-
-  const getPersonalPublicKey = async (account) => {
-    return "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
-  };
+  }, [account, question, minAge, maxAge, vp]); // 🔄 vp를 의존성에 추가
 
   const handleVote = (index) => {
     if (!hasVoted && isEligible && isVerified) {
@@ -200,5 +188,6 @@ const Poll = ({ question, options, minAge, maxAge, account }) => {
     </div>
   );
 };
+
 
 export default Poll;
