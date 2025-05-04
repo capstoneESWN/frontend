@@ -4,6 +4,8 @@ import getDidDocument from "../utils/getDidDocument";
 import { recoverAddress, hashMessage } from "ethers";
 import React, { useState } from "react";
 import "./IdentityVerification.css";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebase"; // Firebase 초기화된 db 객체 import 경로 확인 필요
 
 
 
@@ -101,15 +103,6 @@ function IdentityVerification() {
 
   const publicKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
   const privateKeyBase64 = "MIIBVQIBADANBgkqhkiG9w0BAQEFAASCAT8wggE7AgEAAkEA2DSUsa391ITKKcoUdrUSQYe3qkHGYZ36bmdX4ycuX8z4XfrzMNgDFm3gyYyhX/wUEaAs4qJekj6B10PlZOZe8QIDAQABAkADx2t/7YwdvlJwR41zA7g1eANQUQUAKMw7SMgi+sjXOMw0727y5TXHZ3MYq/5jwZcG3oN+U6edtAuhcHLCvWwpAiEA9kCzmMRuCyTC3uwDT56TzJ6RMqtMAvqsQ/FgrPNyztUCIQDgw2g7LJLwUfAs29cT6BMRmWB3vNXeI1Lr4hIbdcS1rQIhANcLE4tR5kNG/AIOGqoZ8jnbMzMLUdq8K1k93c3K3zRtAiBBqZSnxOvgfW+XC1qYHDKF77L5CBfK37L36oGzuAIRuQIhAILrIgOlMGYUZahiDiH+sRhE127rmM9Aa4sDAgaiPJjH"
-
-
-  // 미리 설정된 신원 정보들
-  const validIdentities = [
-    { school: "한성대학교", studentId: "1971081", name: "김동휘", age: "25" },
-    { school: "한성대학교", studentId: "1971080", name: "전지원", age: "23" },
-    { school: "한성대학교", studentId: "2071494", name: "김희원", age: "23" },
-    { school: "한성대학교", studentId: "1971078", name: "김민기", age: "26" }
-  ];
 
 
   // 추후 사용할 VC 검증 코드
@@ -234,9 +227,9 @@ function IdentityVerification() {
 
       downloadVC(vc);
       alert("VC가 발급되어 저장되었습니다.");
-      await verifyVC(); 
+      await verifyVC();
       gohome();
-      
+
 
     } catch (error) {
       console.error("❌ 오류 발생:", error);
@@ -245,56 +238,77 @@ function IdentityVerification() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    //firebase db 설정. 
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(
+        usersRef,
+        where("school", "==", school),
+        where("studentId", "==", studentId),
+        where("name", "==", name),
+        where("age", "==", Number(age)) // 숫자형 비교
+      );
 
-    const isValid = validIdentities.find(identity =>
-      identity.school === school &&
-      identity.studentId === studentId &&
-      identity.name === name &&
-      identity.age === age
-    );
+      const querySnapshot = await getDocs(q);
 
-    if (isValid) {
-      alert("신원이 확인되었습니다.");
+      // Firestore에서 가져온 문서들 데이터 배열로 변환
+      const foundIdentities = querySnapshot.docs.map(doc => doc.data());
 
-      try {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        const currentaccount = accounts[0];
-        console.log("연결된 계정:", currentaccount);
+      // foundIdentities에서 조건에 맞는 데이터가 있는지 확인
+      const isValid = foundIdentities.some(identity =>
+        identity.school === school &&
+        identity.studentId === studentId &&
+        identity.name === name &&
+        identity.age === Number(age)
+      );
+      console.log(isValid);
+      if (isValid) {
+        alert("✅ 신원이 확인되었습니다.");
 
-        const didDoc = await getDidDocument(currentaccount);
+        try {
+          const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          const currentaccount = accounts[0];
+          console.log("연결된 계정:", currentaccount);
 
-        if (didDoc) {
-          const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
-          if (confirmReissue) {
-            issueVC(isValid, true, currentaccount, didDoc); // VC 재발급
-          }
-        } else {
-          const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
-          if (confirmRegister) {
-            const newDidDoc = {
-              id: `did:ethr:${currentaccount}`,
-              address: currentaccount,
-            };
+          const didDoc = await getDidDocument(currentaccount);
 
-            const result = await saveDidDocument(currentaccount, newDidDoc);
+          if (didDoc) {
+            const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
+            if (confirmReissue) {
+              issueVC(isValid, true, currentaccount, didDoc); // VC 재발급
+            }
+          } else {
+            const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
+            if (confirmRegister) {
+              const newDidDoc = {
+                id: `did:ethr:${currentaccount}`,
+                address: currentaccount,
+              };
 
-            if (result) {
-              alert("✅ DID 문서가 성공적으로 등록되었습니다.");
-              const confirmVC = window.confirm("VC를 발급하시겠습니까?");
-              if (confirmVC) {
-                issueVC(isValid, false, currentaccount, didDoc);
+              const result = await saveDidDocument(currentaccount, newDidDoc);
+
+              if (result) {
+                alert("✅ DID 문서가 성공적으로 등록되었습니다.");
+                const confirmVC = window.confirm("VC를 발급하시겠습니까?");
+                if (confirmVC) {
+                  issueVC(isValid, false, currentaccount, didDoc);
+                }
+              } else {
+                alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
               }
-            } else {
-              alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
             }
           }
+        } catch (error) {
+          console.error("❌ 처리 중 오류 발생:", error);
+          alert("처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
         }
-      } catch (error) {
-        console.error("❌ 처리 중 오류 발생:", error);
-        alert("처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
+      } else {
+        alert("신원 정보가 정확하지 않습니다. 다시 시도하세요.");
       }
-    } else {
-      alert("신원 정보가 정확하지 않습니다. 다시 시도하세요.");
+
+    } catch (error) {
+      console.error("❌ 처리 중 오류 발생:", error);
+      alert("신원 인증 처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
     }
   };
 
@@ -353,3 +367,4 @@ function IdentityVerification() {
 }
 
 export default IdentityVerification;
+
