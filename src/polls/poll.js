@@ -123,6 +123,7 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => { // ğŸ”„ ë
 
         const age = parseInt(vc.credentialSubject.age, 10);
         setUserAge(age);
+        console.log(vc.credentialSubject.age)
 
         if (age >= minAge && age <= maxAge) {
           setIsEligible(true);

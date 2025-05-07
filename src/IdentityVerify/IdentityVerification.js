@@ -186,7 +186,7 @@ function IdentityVerification() {
         credentialSubject: { age: identity.age },
         issuedAt: issuedAt,
       });
-
+      console.log("저장 age", identity.age)
       console.log("🔹 Step 2: 데이터 준비 완료", dataToSign);
 
       // Base64 문자열을 이용해 공개키와 비밀키 임포트
@@ -246,7 +246,7 @@ function IdentityVerification() {
         where("school", "==", school),
         where("studentId", "==", studentId),
         where("name", "==", name),
-        where("age", "==", Number(age)) // 숫자형 비교
+        where("age", "==", age)
       );
 
       const querySnapshot = await getDocs(q);
@@ -255,15 +255,24 @@ function IdentityVerification() {
       const foundIdentities = querySnapshot.docs.map(doc => doc.data());
 
       // foundIdentities에서 조건에 맞는 데이터가 있는지 확인
-      const isValid = foundIdentities.some(identity =>
+      const isValid = foundIdentities.find(identity =>
         identity.school === school &&
         identity.studentId === studentId &&
         identity.name === name &&
-        identity.age === Number(age)
+        identity.age === age
       );
+      foundIdentities.forEach(identity => {
+        console.log("Checking:", identity);
+        console.log("school:", identity.school === school);
+        console.log("studentId:", identity.studentId === studentId);
+        console.log("name:", identity.name === name);
+        console.log("age:", identity.age === age);
+      });
       console.log(isValid);
       if (isValid) {
         alert("✅ 신원이 확인되었습니다.");
+
+
 
         try {
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
