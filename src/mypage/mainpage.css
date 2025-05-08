@@ -1,0 +1,21 @@
+.main-container {
+  display: flex; /* 가로 정렬 */
+  justify-content: center; /* 중앙 정렬 */
+  gap: 20px; /* 버튼 간격 */
+  margin-top: 50px;
+}
+
+.main-container button {
+  padding: 15px 30px;
+  font-size: 18px;
+  border: none;
+  border-radius: 10px;
+  background-color: #007bff;
+  color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.main-container button:hover {
+  background-color: #0056b3;
+}

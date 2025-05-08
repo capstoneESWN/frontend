@@ -1,0 +1,41 @@
+.identity-verification {
+  height: 100vh; /* 화면 전체 높이 */
+  background-size: cover; /* 배경 이미지가 화면 크기에 맞게 커지도록 */
+  background-position: center; /* 배경 이미지가 중앙에 위치하도록 */
+  display: flex; /* Flexbox 레이아웃 사용 */
+  justify-content: center; /* 수평 중앙 정렬 */
+  align-items: center; /* 수직 중앙 정렬 */
+  flex-direction: column; /* 자식 요소들이 세로로 쌓이도록 */
+  text-align: center;
+  color: white;
+}
+
+.identity-verification form {
+  display: flex;
+  flex-direction: column;
+}
+
+.identity-verification div {
+  margin-bottom: 10px;
+}
+
+.identity-verification input {
+  padding: 10px;
+  font-size: 14px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.identity-verification button {
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.identity-verification button:hover {
+  background-color: #0056b3;
+}
