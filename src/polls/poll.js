@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
@@ -35,9 +35,14 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
   const [isEligible, setIsEligible] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [hasAlerted, setHasAlerted] = useState(false);  // 알림 상태 추가
+  const [hasPosted, setHasPosted] = useState(false); // postMessage가 이미 보낸 상태인지 확인
+
 
   useEffect(() => {
     const verifyAndCheckVote = async () => {
+      if (hasAlerted || hasPosted) return;  // 알림과 postMessage가 이미 처리되었으면 종료
+
       setLoading(true);
       if (!account || !vp) return;
 
@@ -95,26 +100,46 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
         );
 
         const isPersonalValid = recovered.toLowerCase() === account.toLowerCase();
+        let checkValidation = false;
         if (!isAuthorityValid || !isPersonalValid) {
           setIsVerified(false);
           return;
         }
-
-        setIsVerified(true);
+        checkValidation = true;
+        setIsVerified(true); 
 
         const age = parseInt(vc.credentialSubject.age, 10);
         setUserAge(age);
 
-        const eligible = age >= minAge && age <= maxAge;
-        setIsEligible(eligible);
-
-        if (eligible) {
-          const pollDocId = `${question}-${account}`;
-          const voteDoc = await getDoc(doc(db, "votes", pollDocId));
-          if (voteDoc.exists()) {
-            setHasVoted(true);
+        if (checkValidation && age != null) {
+          // 알림이 아직 발생하지 않았으면 알림 표시 후 상태 변경
+          if (!hasAlerted) {
+            alert("VP 검증 성공. 여론조사 사이트로 돌아갑니다.");
+            setHasAlerted(true);  // 알림 상태를 true로 설정
           }
+
+          // postMessage가 아직 보내지지 않았으면 한 번만 실행
+          if (!hasPosted) {
+            if (window.opener) {
+              console.log('parent window exists:', window.opener);  // window.opener가 정상인지 확인
+              // 부모 창으로 메시지 전송
+              window.opener.postMessage(
+                { age: age, isVerified: true },
+                'http://localhost:3001'  // 부모 창의 URL을 지정
+              );
+            } else {
+              console.log('window.opener is null or undefined');
+            }
+
+            setHasPosted(true);  // postMessage가 이미 처리되었음을 기록
+          }
+
+          // 현재 창을 닫기
+          window.close();
+        } else {
+          console.log('Verification or age is invalid');
         }
+
       } catch (e) {
         console.error("VP 검증 중 오류:", e);
         setIsVerified(false);
@@ -124,28 +149,7 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
     };
 
     verifyAndCheckVote();
-  }, [account, question, minAge, maxAge, vp]);
-
-  const handleVote = async (index) => {
-    if (hasVoted || !isEligible || !isVerified) return;
-
-    const newVotes = [...votes];
-    newVotes[index] += 1;
-    setVotes(newVotes);
-    setHasVoted(true);
-
-    try {
-      const pollDocId = `${question}-${account}`;
-      await setDoc(doc(db, "votes", pollDocId), {
-        votedAt: new Date().toISOString(),
-        selectedOption: options[index],
-        account,
-        question
-      });
-    } catch (err) {
-      console.error("투표 저장 실패:", err);
-    }
-  };
+  }, [account, vp, hasAlerted, hasPosted]);  // 의존성 배열에 `hasAlerted`, `hasPosted` 추가
 
   if (loading) return <div>로딩 중...</div>;
   if (!account) return <div>지갑을 연결해주세요.</div>;
@@ -158,7 +162,7 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
       <h3>{question}</h3>
       {options.map((option, index) => (
         <div key={index} style={{ marginBottom: '10px' }}>
-          <button onClick={() => handleVote(index)} style={{
+          <button style={{
             padding: '8px 12px',
             backgroundColor: '#007bff',
             color: 'white',
