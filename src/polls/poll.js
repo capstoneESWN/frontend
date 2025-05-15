@@ -35,13 +35,12 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
   const [isEligible, setIsEligible] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [hasAlerted, setHasAlerted] = useState(false);  // 알림 상태 추가
-  const [hasPosted, setHasPosted] = useState(false); // postMessage가 이미 보낸 상태인지 확인
-
+  const [hasAlerted, setHasAlerted] = useState(false); // 알림 상태
+  const [hasPosted, setHasPosted] = useState(false); // postMessage 상태
 
   useEffect(() => {
     const verifyAndCheckVote = async () => {
-      if (hasAlerted || hasPosted) return;  // 알림과 postMessage가 이미 처리되었으면 종료
+      if (hasAlerted || hasPosted) return;
 
       setLoading(true);
       if (!account || !vp) return;
@@ -106,35 +105,32 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
           return;
         }
         checkValidation = true;
-        setIsVerified(true); 
+        setIsVerified(true);
 
         const age = parseInt(vc.credentialSubject.age, 10);
         setUserAge(age);
 
         if (checkValidation && age != null) {
-          // 알림이 아직 발생하지 않았으면 알림 표시 후 상태 변경
           if (!hasAlerted) {
             alert("VP 검증 성공. 여론조사 사이트로 돌아갑니다.");
-            setHasAlerted(true);  // 알림 상태를 true로 설정
+            setHasAlerted(true);
           }
 
-          // postMessage가 아직 보내지지 않았으면 한 번만 실행
           if (!hasPosted) {
             if (window.opener) {
-              console.log('parent window exists:', window.opener);  // window.opener가 정상인지 확인
-              // 부모 창으로 메시지 전송
+              console.log('parent window exists:', window.opener);
+              // 부모 창으로 나이와 지갑 주소를 함께 전송
               window.opener.postMessage(
-                { age: age, isVerified: true },
-                'http://localhost:3001'  // 부모 창의 URL을 지정
+                { age: age, isVerified: true, account: account },
+                'http://localhost:3001'
               );
             } else {
               console.log('window.opener is null or undefined');
             }
 
-            setHasPosted(true);  // postMessage가 이미 처리되었음을 기록
+            setHasPosted(true);
           }
 
-          // 현재 창을 닫기
           window.close();
         } else {
           console.log('Verification or age is invalid');
@@ -149,7 +145,7 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
     };
 
     verifyAndCheckVote();
-  }, [account, vp, hasAlerted, hasPosted]);  // 의존성 배열에 `hasAlerted`, `hasPosted` 추가
+  }, [account, vp, hasAlerted, hasPosted]);
 
   if (loading) return <div>로딩 중...</div>;
   if (!account) return <div>지갑을 연결해주세요.</div>;
