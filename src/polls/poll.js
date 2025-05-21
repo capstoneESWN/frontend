@@ -56,6 +56,8 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
         const publicKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
         const publicKey = await importKeyFromBase64(publicKeyBase64, false);
 
+        
+
         const vcData = JSON.stringify({
           type: vc.type,
           credentialSubject: vc.credentialSubject,
@@ -116,12 +118,12 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
             setHasAlerted(true);
           }
 
-          if (!hasPosted) {
+          if (!hasPosted ) {
+            const ageGroup = Math.floor(age / 10) * 10;
             if (window.opener) {
               console.log('parent window exists:', window.opener);
-              // 부모 창으로 나이와 지갑 주소를 함께 전송
               window.opener.postMessage(
-                { age: age, isVerified: true, account: account },
+                { age: ageGroup, isVerified: true, account: account },
                 'http://localhost:3001'
               );
             } else {

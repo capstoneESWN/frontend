@@ -1,5 +1,3 @@
-/* 메인 앱 코드 [MetaMask 설치 유무 확인 코드] */
-
 import React, { Suspense, useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import IdentityVerification from "./IdentityVerify/IdentityVerification";
@@ -70,5 +68,6 @@ function App() {
     </div>
   );
 }
+
 
 export default App;

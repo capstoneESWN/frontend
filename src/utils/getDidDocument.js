@@ -4,7 +4,6 @@ import DIDRegistry from "../contracts/DIDRegistry.json";
 const getDidDocument = async (account) => {
   try {
     console.log("getDidDocument에 전달된 account:", account); // 추가해보자
-
     console.log("DID 컨트랙트 주소:", process.env.REACT_APP_DID_CONTRACT_ADDRESS);
 
     const provider = new BrowserProvider(window.ethereum);

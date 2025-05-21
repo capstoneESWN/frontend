@@ -22,9 +22,8 @@ const pollsData = [
   },
 ];
 
-const Polls = ({ account }) => {
+const Polls = ({ account}) => {
   const [vpData, setVpData] = useState(null); // 🔥 업로드된 VP 저장
-
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
