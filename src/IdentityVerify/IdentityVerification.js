@@ -269,7 +269,11 @@ function IdentityVerification() {
           />
         </div>
         <button type="submit" style={{ marginBottom: "10px" }} >신원 인증 제출</button>
-        <button type="button" onClick={gohome} >뒤로가기</button>
+        <button type="button" onClick={() => window.history.back()}>
+          뒤로가기
+        </button>
+
+        {/* <button type="button" onClick={gohome} >뒤로가기</button> */}
       </form>
     </div>
   );

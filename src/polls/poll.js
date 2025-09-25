@@ -56,7 +56,7 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
         const publicKeyBase64 = "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBANg0lLGt/dSEyinKFHa1EkGHt6pBxmGd+m5nV+MnLl/M+F368zDYAxZt4MmMoV/8FBGgLOKiXpI+gddD5WTmXvECAwEAAQ==";
         const publicKey = await importKeyFromBase64(publicKeyBase64, false);
 
-        
+
 
         const vcData = JSON.stringify({
           type: vc.type,
@@ -114,11 +114,19 @@ const Poll = ({ question, options, minAge, maxAge, account, vp }) => {
 
         if (checkValidation && age != null) {
           if (!hasAlerted) {
-            alert("VP 검증 성공. 여론조사 사이트로 돌아갑니다.");
             setHasAlerted(true);
+
+            // 3초 뒤 자동 이동 + 창 닫기
+            setTimeout(() => {
+              if (window.opener) {
+                window.opener.location.href = "http://localhost:3001";
+              }
+              window.close();
+            }, 3000); // 3000ms = 3초
           }
 
-          if (!hasPosted ) {
+
+          if (!hasPosted) {
             const ageGroup = Math.floor(age / 10) * 10;
             if (window.opener) {
               console.log('parent window exists:', window.opener);
