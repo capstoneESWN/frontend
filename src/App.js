@@ -29,7 +29,7 @@ function App() {
 
   return (
     <div className="App"> 
-      <h1 className="eswn">ESWN</h1>
+      <h1 className="eswn">VeriVote</h1>
 
         <Routes>
           <Route path="/" element={

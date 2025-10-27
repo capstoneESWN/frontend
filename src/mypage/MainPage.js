@@ -1,5 +1,4 @@
-/* 신원 인증이 완료된 사용자 화면 코드 */
-//MainPage.js
+
 import React, { useState, useEffect } from "react";
 import { issuerVP } from "../utils/issureVP";
 import { useNavigate } from "react-router-dom";// 경로는 네 구조에 따라 조정
@@ -12,7 +11,7 @@ const MainPage = () => {
   const navigate = useNavigate();
 
   const handleReissueClick = () => {
-    navigate("/identity-verification"); // 👈 경로 이동
+    navigate("/identity-verification"); // 👈 VC 재발급 방향으로!
   };
 
   const handleReVPClick = () => {
@@ -26,11 +25,11 @@ const MainPage = () => {
 
   return (
     <div className="main-container">
-      <button onClick={handleReissueClick}>VC 재발급하기</button>
+      <button onClick={handleReissueClick}>VC 재발급</button>
 
-      <button onClick={handleReVPClick}>VP 발급하기</button>
+      <button onClick={handleReVPClick}>VP 발급</button>
 
-      <button onClick={handlePollClick}>여론조사 시작하기</button>
+      <button onClick={handlePollClick}>여론조사 시작</button>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-/* 신원 인증 화면 코드 */
 import saveDidDocument from "../utils/saveDidDocument";
 import getDidDocument from "../utils/getDidDocument";
 import { recoverAddress, hashMessage } from "ethers";
@@ -69,13 +68,11 @@ async function importKeyFromBase64(base64Key, isPrivateKey) {
 
     console.log("✅ Base64 → ArrayBuffer 변환 완료:", keyBuffer);
 
-    // 키 타입 결정
     const keyFormat = isPrivateKey ? "pkcs8" : "spki";
     const keyUsage = isPrivateKey ? ["sign"] : ["verify"];
 
     console.log(`🔹 키 포맷: ${keyFormat}, 용도: ${keyUsage}`);
-
-    // 키 임포트
+    
     const key = await crypto.subtle.importKey(
       keyFormat,
       keyBuffer,
@@ -91,8 +88,6 @@ async function importKeyFromBase64(base64Key, isPrivateKey) {
     throw error;
   }
 }
-
-
 
 
 function IdentityVerification() {

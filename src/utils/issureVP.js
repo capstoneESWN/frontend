@@ -1,6 +1,6 @@
 export const issuerVP = async () => {
     try {
-        // 1. 파일 업로드 받기
+        // 1️⃣ 파일 업로드 받기
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'application/json';
@@ -18,18 +18,31 @@ export const issuerVP = async () => {
                     const vcString = e.target.result;
                     const vc = JSON.parse(vcString);
 
-                    // 2. 현재 연결된 지갑 주소 가져오기
+                    // ✅ 1. 사용자가 VP에 포함할 필드 선택
+                    const selectedFields = await selectFields(vc);
+                    if (!selectedFields || selectedFields.length === 0) {
+                        alert("❌ 아무 항목도 선택되지 않았습니다.");
+                        return;
+                    }
+
+                    // ✅ 2. 선택된 필드만 남기기
+                    const filteredVC = {};
+                    for (const key of selectedFields) {
+                        filteredVC[key] = vc[key];
+                    }
+
+                    // 3️⃣ 현재 연결된 지갑 주소 가져오기
                     const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
                     const currentaccount = accounts[0];
 
-                    // 3. VP 데이터 구성
+                    // 4️⃣ VP 데이터 구성
                     const vpPayload = {
                         type: "VerifiablePresentation",
                         holder: `did:ethr:${currentaccount}`,
-                        verifiableCredential: [vc],
+                        verifiableCredential: [filteredVC], // ✅ 필터된 VC만 포함
                     };
 
-                    // 4. EIP-712 TypedData 구성
+                    // 5️⃣ EIP-712 TypedData 구성
                     const typedData = {
                         types: {
                             EIP712Domain: [
@@ -52,17 +65,17 @@ export const issuerVP = async () => {
                         message: {
                             type: "VerifiablePresentation",
                             holder: `did:ethr:${currentaccount}`,
-                            verifiableCredential: JSON.stringify(vc),
+                            verifiableCredential: JSON.stringify(filteredVC),
                         },
                     };
 
-                    // 5. MetaMask를 통해 서명 요청
+                    // 6️⃣ MetaMask 서명
                     const signature = await window.ethereum.request({
                         method: "eth_signTypedData_v4",
                         params: [currentaccount, JSON.stringify(typedData)],
                     });
 
-                    // 6. VP + proof 구성
+                    // 7️⃣ VP + proof 구성
                     const vp = {
                         ...vpPayload,
                         proof: {
@@ -75,13 +88,12 @@ export const issuerVP = async () => {
                         },
                     };
 
-                    // 7. 저장 및 다운로드
+                    // 8️⃣ 다운로드
                     localStorage.setItem("verifiablePresentation", JSON.stringify(vp));
                     console.log("✅ VP 발급 완료:", vp);
-                    alert("✅ VP 발급 완료");
+                    alert("✅ 선택된 항목만 포함된 VP 발급 완료");
 
                     downloadVP(vp);
-                    alert("✅ VP 발급 및 다운로드 완료");
 
                 } catch (readError) {
                     console.error("❌ 파일 읽기 오류:", readError);
@@ -100,6 +112,84 @@ export const issuerVP = async () => {
     }
 };
 
+
+// ✅ 체크박스 UI: 선택된 항목만 VP로 포함
+// ✅ credentialSubject 내부 항목만 선택하도록 수정
+// ✅ 고정된 항목 5개(name, age, studentId, university, gender)만 표시
+async function selectFields(vc) {
+    return new Promise((resolve) => {
+        const subject = vc.credentialSubject || vc;
+
+        // 1️⃣ 표시할 항목 정의
+        const targetKeys = ["name", "age", "studentId", "university", "gender"];
+
+        // 2️⃣ 팝업 UI 생성
+        const container = document.createElement("div");
+        container.style.cssText = `
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: white; border: 1px solid #ccc; border-radius: 10px;
+            padding: 20px; z-index: 9999;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-family: sans-serif;
+        `;
+
+        const title = document.createElement("h3");
+        title.textContent = "VP에 포함할 항목을 선택하세요:";
+        container.appendChild(title);
+
+        const checkboxes = [];
+
+        // 3️⃣ 고정된 항목 5개 표시 (값은 표시하지 않음)
+        targetKeys.forEach((key) => {
+            const label = document.createElement("label");
+            label.style.display = "block";
+            label.style.marginBottom = "6px";
+            label.style.cursor = "pointer";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = key;
+            checkbox.style.marginRight = "6px";
+
+            // 텍스트에는 항목명만 표시
+            const labelText = document.createTextNode(key);
+
+            label.appendChild(checkbox);
+            label.appendChild(labelText);
+
+            container.appendChild(label);
+            checkboxes.push(checkbox);
+        });
+
+        // 4️⃣ 확인 버튼
+        const confirmButton = document.createElement("button");
+        confirmButton.textContent = "확인";
+        confirmButton.style.marginTop = "10px";
+        confirmButton.style.padding = "6px 12px";
+        confirmButton.style.cursor = "pointer";
+        confirmButton.onclick = () => {
+            // 선택된 필드 확인
+            const selected = checkboxes.filter(c => c.checked).map(c => c.value);
+
+            // VC에 존재하지 않는 필드 선택 시 오류 메시지
+            const missing = selected.filter((key) => subject[key] === undefined);
+            if (missing.length > 0) {
+                alert(`❌ 선택한 항목 중 VC에 존재하지 않는 항목이 있습니다: ${missing.join(", ")}`);
+                return;
+            }
+
+            document.body.removeChild(container);
+            resolve(selected);
+        };
+
+        container.appendChild(confirmButton);
+        document.body.appendChild(container);
+    });
+}
+
+
+
 function downloadVP(vp) {
     const vpJson = JSON.stringify(vp, null, 2);
     const blob = new Blob([vpJson], { type: 'application/json' });
@@ -108,14 +198,27 @@ function downloadVP(vp) {
     const a = document.createElement('a');
     a.href = url;
 
-    // 현재 시간 넣어서 파일명 설정
+    let fileName = "vp";
+    try {
+        const vc = vp.verifiableCredential?.[0];
+        if (vc && typeof vc === "object") {
+            const subject = vc.credentialSubject || vc;
+            const keys = Object.keys(subject);
+            if (keys.length > 0) {
+                fileName += "_" + keys.join("_");
+            }
+        }
+    } catch (err) {
+        console.warn("파일명 생성 실패:", err);
+    }
+
     const now = new Date();
     const timestamp = now.toISOString().replace(/[-:.]/g, "").slice(0, 15);
-    a.download = `verifiable_presentation_${timestamp}.json`;
+    fileName += `.${timestamp}.json`;
 
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-
     URL.revokeObjectURL(url);
 }
