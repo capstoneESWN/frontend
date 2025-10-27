@@ -4,7 +4,7 @@ import IdentityVerification from "./IdentityVerify/IdentityVerification";
 import WalletConnect from "./WalletConnect";
 import DIDForm from "./DIDForm";
 import Authenticate from "./authenticate";
-import bgImage from './assets/bg.jpg';
+import logoImage from './assets/verivote_logo.png';
 import MainPage from "./mypage/MainPage";
 import Polls from "./polls/polls"; // polls 컴포넌트 가져오기
 import ProtectedRoute from "./ProtectedRoute";
@@ -24,20 +24,23 @@ function App() {
   }, []);
 
   useEffect(() => {
-  console.log("현재 계정:", account);  // account 상태를 콘솔에 출력
-}, [account]); 
+    console.log("현재 계정:", account);  // account 상태를 콘솔에 출력
+  }, [account]);
 
   return (
-    <div className="App"> 
+    <div className="App">
+      {/* 팀 로고 + 제목 통합 */}
+      <img src={logoImage} alt="VeriVote Logo" className="w-16 h-16" />
       <h1 className="eswn">VeriVote</h1>
+      <p className="text-lg text-gray-600">(주)이에스더블유엔(ESWN)</p>
 
-        <Routes>
-          <Route path="/" element={
+      <Routes>
+        <Route
+          path="/"
+          element={
             hasMetaMask ? (
               account ? (
-                <>
-                  <DIDForm account={account} />
-                </>
+                <DIDForm account={account} />
               ) : (
                 <WalletConnect setAccount={setAccount} account={account} />
               )
@@ -55,8 +58,10 @@ function App() {
                 </a>
               </div>
             )
-          } />
-          {/* 🔒 인증이 필요한 경로들 보호 */}
+          }
+        />
+
+        {/* 🔒 인증이 필요한 경로들 보호 */}
         <Route element={<ProtectedRoute isAuthenticated={isAuthenticated} />}>
           <Route path="/identity-verification" element={<IdentityVerification />} />
           <Route path="/didform" element={<DIDForm />} />
@@ -64,10 +69,9 @@ function App() {
           <Route path="/mainpage" element={<MainPage />} />
           <Route path="/polls" element={<Polls account={account} />} /> {/* Polls 경로 추가 */}
         </Route>
-        </Routes>
+      </Routes>
     </div>
   );
 }
-
 
 export default App;

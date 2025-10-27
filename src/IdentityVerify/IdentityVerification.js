@@ -98,128 +98,128 @@ function IdentityVerification() {
 
 
   const issueVC = async (identity, reissue, currentaccount, didDocument) => {
-  try {
-    if (reissue) {
-      const message = "message for VC";
-      const signature = await window.ethereum.request({
-        method: "personal_sign",
-        params: [message, currentaccount],
+    try {
+      if (reissue) {
+        const message = "message for VC";
+        const signature = await window.ethereum.request({
+          method: "personal_sign",
+          params: [message, currentaccount],
+        });
+
+        const recoveredAddress = recoverAddress(hashMessage(message), signature);
+        const didAddress = didDocument.address;
+        if (recoveredAddress.toLowerCase() !== didAddress.toLowerCase()) {
+          alert("❌ 지갑 소유자 검증에 실패했습니다. VC 발급을 중단합니다.");
+          console.error("지갑 주소 불일치:", recoveredAddress, didAddress);
+          return;
+        }
+      }
+
+      // 🔸 Spring Boot로 VC 요청
+      const response = await fetch("http://localhost:8080/issueVC", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          university: identity.university,
+          studentId: identity.studentId,
+          studentName: identity.studentName,
+          age: identity.age,
+        }),
       });
 
-      const recoveredAddress = recoverAddress(hashMessage(message), signature);
-      const didAddress = didDocument.address;
-      if (recoveredAddress.toLowerCase() !== didAddress.toLowerCase()) {
-        alert("❌ 지갑 소유자 검증에 실패했습니다. VC 발급을 중단합니다.");
-        console.error("지갑 주소 불일치:", recoveredAddress, didAddress);
-        return;
+      if (!response.ok) {
+        throw new Error("서버 응답 실패");
       }
+
+      const vc = await response.json(); // Spring에서 발급한 VC
+      console.log("✅ VC 수신 성공:", vc);
+      downloadVC(vc);
+      alert("VC가 발급되어 저장되었습니다.");
+      gohome();
+
+    } catch (error) {
+      console.error("❌ 오류 발생:", error);
+      alert("VC 발급 중 오류 발생");
     }
-
-    // 🔸 Spring Boot로 VC 요청
-    const response = await fetch("http://localhost:8080/issueVC", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-       university: identity.university,
-       studentId: identity.studentId,
-       studentName: identity.studentName,
-       age: identity.age,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error("서버 응답 실패");
-    }
-
-    const vc = await response.json(); // Spring에서 발급한 VC
-    console.log("✅ VC 수신 성공:", vc);
-    downloadVC(vc);
-    alert("VC가 발급되어 저장되었습니다.");
-    gohome();
-
-  } catch (error) {
-    console.error("❌ 오류 발생:", error);
-    alert("VC 발급 중 오류 발생");
-  }
-};
-
- const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  const requestData = {
-    university: school,
-    studentId: Number(studentId),
-    studentName: name,
-    age: Number(age),
   };
 
-  try {
-    const response = await fetch("http://localhost:8080/identityverify", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(requestData),
-    });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    if (!response.ok) {
-      throw new Error("서버 응답 오류");
-    }
+    const requestData = {
+      university: school,
+      studentId: Number(studentId),
+      studentName: name,
+      age: Number(age),
+    };
 
-    const isValid = await response.json(); // true or false 반환
+    try {
+      const response = await fetch("http://localhost:8080/identityverify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
 
-    if (isValid === true) {
-      alert("✅ 신원이 확인되었습니다.");
+      if (!response.ok) {
+        throw new Error("서버 응답 오류");
+      }
 
-      try {
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-        const currentaccount = accounts[0];
-        console.log("연결된 계정:", currentaccount);
+      const isValid = await response.json(); // true or false 반환
 
-        const didDoc = await getDidDocument(currentaccount);
+      if (isValid === true) {
+        alert("✅ 신원이 확인되었습니다.");
 
-        if (didDoc) {
-          const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
-          if (confirmReissue) {
-            issueVC(requestData, true, currentaccount, didDoc); // VC 재발급
-          }
-        } else {
-          const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
-          if (confirmRegister) {
-            const newDidDoc = {
-              id: `did:ethr:${currentaccount}`,
-              address: currentaccount,
-            };
+        try {
+          const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          const currentaccount = accounts[0];
+          console.log("연결된 계정:", currentaccount);
 
-            const result = await saveDidDocument(currentaccount, newDidDoc);
+          const didDoc = await getDidDocument(currentaccount);
 
-            if (result) {
-              alert("✅ DID 문서가 성공적으로 등록되었습니다.");
-              const confirmVC = window.confirm("VC를 발급하시겠습니까?");
-              if (confirmVC) {
-                issueVC(requestData, false, currentaccount, didDoc);
+          if (didDoc) {
+            const confirmReissue = window.confirm("이미 해당 신원으로 DID 문서가 존재합니다.\nVC를 재발급하시겠습니까?");
+            if (confirmReissue) {
+              issueVC(requestData, true, currentaccount, didDoc); // VC 재발급
+            }
+          } else {
+            const confirmRegister = window.confirm("DID문서를 등록하시겠습니까?");
+            if (confirmRegister) {
+              const newDidDoc = {
+                id: `did:ethr:${currentaccount}`,
+                address: currentaccount,
+              };
+
+              const result = await saveDidDocument(currentaccount, newDidDoc);
+
+              if (result) {
+                alert("✅ DID 문서가 성공적으로 등록되었습니다.");
+                const confirmVC = window.confirm("VC를 발급하시겠습니까?");
+                if (confirmVC) {
+                  issueVC(requestData, false, currentaccount, didDoc);
+                }
+              } else {
+                alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
               }
-            } else {
-              alert("❌ DID 문서 등록 중 오류가 발생했습니다.");
             }
           }
+        } catch (error) {
+          console.error("❌ 처리 중 오류 발생:", error);
+          alert("처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
         }
-      } catch (error) {
-        console.error("❌ 처리 중 오류 발생:", error);
-        alert("처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
+      } else {
+        alert("❌ 신원 정보가 정확하지 않습니다. 다시 시도하세요.");
       }
-    } else {
-      alert("❌ 신원 정보가 정확하지 않습니다. 다시 시도하세요.");
+    } catch (error) {
+      console.error("❌ 신원 인증 처리 중 오류 발생:", error);
+      alert("신원 인증 처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
     }
-  } catch (error) {
-    console.error("❌ 신원 인증 처리 중 오류 발생:", error);
-    alert("신원 인증 처리 중 오류가 발생했습니다. 콘솔을 확인해주세요.");
-  }
-};
+  };
 
 
   const gohome = () => {
-    window.location.href = "/"; // 메인 화면으로 이동
+    window.location.href = "/mainpage"; // 메인 화면으로 이동
   };
 
   return (
@@ -227,7 +227,7 @@ function IdentityVerification() {
       <h2>신원 인증</h2>
       <form onSubmit={handleSubmit}>
         <div>
-          <label>학교</label>
+          <label style={{ marginRight: "10px" }}>학교</label>
           <input
             type="text"
             value={school}
@@ -236,7 +236,7 @@ function IdentityVerification() {
           />
         </div>
         <div>
-          <label>학번</label>
+          <label style={{ marginRight: "10px" }}>학번</label>
           <input
             type="text"
             value={studentId}
@@ -245,7 +245,7 @@ function IdentityVerification() {
           />
         </div>
         <div>
-          <label>이름</label>
+          <label style={{ marginRight: "10px" }}>이름</label>
           <input
             type="text"
             value={name}
@@ -255,7 +255,7 @@ function IdentityVerification() {
           />
         </div>
         <div>
-          <label>나이</label>
+          <label style={{ marginRight: "10px" }}>나이</label>
           <input
             type="number"
             value={age}
@@ -264,7 +264,11 @@ function IdentityVerification() {
           />
         </div>
         <button type="submit" style={{ marginBottom: "10px" }} >신원 인증 제출</button>
-        <button type="button" onClick={gohome} >뒤로가기</button>
+        <button type="button" onClick={() => window.history.back()}>
+          뒤로가기
+        </button>
+
+        {/* <button type="button" onClick={gohome} >뒤로가기</button> */}
       </form>
     </div>
   );
